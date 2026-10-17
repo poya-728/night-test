@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記承天寺夜遊 - 華麗解謎遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+TC:wght@400;600;900&display=swap');
+        
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .font-calligraphy {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .bg-custom-image {
+            background-image: url('承天寺.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Ambient Glow & Effects */
+        .moon-glow {
+            box-shadow: 0 0 50px 15px rgba(234, 218, 182, 0.4);
+        }
+
+        .gold-border {
+            border: 2px solid #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .gold-text {
+            background: linear-gradient(135deg, #fff7ad 0%, #ffa938 50%, #c47c17 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-panel {
+            background: rgba(13, 17, 23, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* Dynamic Canvas Layer */
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .modal-enter {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Pulse Animation for interactive hotspots */
+        @keyframes pulse-gold {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(212, 175, 55, 0.6); }
+            50% { transform: scale(1.15); box-shadow: 0 0 25px rgba(212, 175, 55, 1); }
+        }
+
+        .hotspot-glow {
+            animation: pulse-gold 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen relative flex items-center justify-center">
+
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Background Container -->
+    <div id="gameBg" class="absolute inset-0 bg-custom-image transition-all duration-1000 transform scale-105"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none"></div>
+
+    <!-- UI Overlay Navigation Header -->
+    <header class="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-20">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl md:text-3xl gold-text font-calligraphy tracking-widest">記承天寺夜遊</span>
+            <span class="text-xs text-amber-200/60 border border-amber-500/30 px-2 py-0.5 rounded">東坡解謎特輯</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="audioToggleBtn" class="glass-panel text-amber-300 hover:text-amber-100 p-3 rounded-full transition-all">
+                <i class="fas fa-volume-up text-lg" id="audioIcon"></i>
+            </button>
+            <button id="poemBookBtn" class="glass-panel text-amber-300 hover:text-amber-100 px-4 py-2 rounded-lg flex items-center space-x-2 text-sm">
+                <i class="fas fa-book-open"></i>
+                <span class="hidden md:inline">名句手記</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN START MENU -->
+    <main id="startMenu" class="relative z-20 text-center max-w-xl mx-auto px-6 modal-enter">
+        <div class="glass-panel p-8 md:p-12 rounded-2xl relative border-amber-500/40">
+            <h1 class="text-5xl md:text-7xl font-calligraphy gold-text mb-4 tracking-wider">承天夜遊</h1>
+            <p class="text-amber-100/80 text-sm md:text-base leading-relaxed mb-8">
+                「元豐六年十月十二日夜，解衣欲睡，月色入戶，欣然起行。」<br>
+                隨東坡之足跡，踏入微涼月色，破譯清幽與心靈豁達之謎。
+            </p>
+            
+            <div class="space-y-4">
+                <button onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-600 hover:from-amber-600 hover:to-yellow-500 text-amber-950 font-bold text-lg rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 border border-amber-300/50 flex items-center justify-center space-x-2">
+                    <i class="fas fa-moon"></i>
+                    <span>入寺探索（開始遊戲）</span>
+                </button>
+                <button onclick="showInstructions()" class="w-full py-3 glass-panel text-amber-200 hover:bg-amber-950/40 font-medium text-sm rounded-xl transition-all">
+                    遊歷指南
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- GAMEPLAY HUD & PUZZLE CONTAINER -->
+    <div id="gameplayArea" class="hidden relative z-20 w-full h-full flex flex-col justify-between p-6">
+        
+        <!-- Top Status / Level Indicator -->
+        <div class="flex justify-center mt-16">
+            <div class="glass-panel px-6 py-2 rounded-full border-amber-500/30 text-amber-200 text-sm flex items-center space-x-3">
+                <i class="fas fa-compass text-amber-400"></i>
+                <span id="chapterTitle">序章：月色入戶</span>
+            </div>
+        </div>
+
+        <!-- Interactive Hotspots Container (Dynamic based on Chapter) -->
+        <div id="hotspotContainer" class="absolute inset-0 z-10 pointer-events-none"></div>
+
+        <!-- Dialog & Narrative Bottom Panel -->
+        <div class="max-w-3xl mx-auto w-full glass-panel p-6 rounded-xl relative border-amber-500/40 mb-4 z-20">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 rounded-full bg-amber-900/50 border border-amber-400/50 flex items-center justify-center text-amber-300 font-calligraphy text-2xl flex-shrink-0">
+                    蘇
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-amber-400 font-bold text-sm mb-1" id="speakerName">蘇軾</h3>
+                    <p class="text-amber-100 text-base leading-relaxed" id="dialogText">
+                        夜深不寐，見月光灑落房門，心生歡喜。何不尋訪承天寺之友？
+                    </p>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button id="nextActionBtn" onclick="handleNextStep()" class="px-5 py-2 bg-amber-600/80 hover:bg-amber-500 text-amber-950 font-bold rounded-lg text-sm transition-all flex items-center space-x-2">
+                    <span id="btnText">啟程尋友</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PUZZLE MODAL POPUP -->
+    <div id="puzzleModal" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/80 p-4">
+        <div class="glass-panel max-w-lg w-full p-6 md:p-8 rounded-2xl relative border-amber-500/50 modal-enter">
+            <button onclick="closePuzzleModal()" class="absolute top-4 right-4 text-amber-400/60 hover:text-amber-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <h2 id="puzzleTitle" class="text-2xl font-calligraphy gold-text mb-2 text-center">承天密碼</h2>
+            <p id="puzzleDesc" class="text-xs text-amber-200/70 text-center mb-6">旋轉石環，使其對齊月光軸線</p>
+
+            <!-- Dynamic Puzzle Screen Area -->
+            <div id="puzzleContent" class="flex flex-col items-center justify-center min-h-[220px]">
+                <!-- Injected via JavaScript -->
+            </div>
+
+            <div id="puzzleFeedback" class="text-center text-sm mt-4 min-h-[24px]"></div>
+        </div>
+    </div>
+
+    <!-- POEM COLLECTION MODAL -->
+    <div id="poemModal" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-black/85 p-4">
+        <div class="glass-panel max-w-md w-full p-6 rounded-2xl relative border-amber-500/40">
+            <button onclick="togglePoemModal()" class="absolute top-4 right-4 text-amber-400/60 hover:text-amber-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h3 class="text-2xl font-calligraphy gold-text mb-4 text-center">承天夜遊手記</h3>
+            <div class="space-y-3 text-sm text-amber-100/90 leading-relaxed max-h-80 overflow-y-auto pr-2">
+                <p class="p-3 bg-amber-950/30 rounded border border-amber-500/20">「元豐六年十月十二日夜，解衣欲睡，月色入戶，欣然起行。」</p>
+                <p class="p-3 bg-amber-950/30 rounded border border-amber-500/20">「念無與為樂者，遂至承天寺尋張懷民。懷民亦未寢，相與步於中庭。」</p>
+                <p class="p-3 bg-amber-950/30 rounded border border-amber-500/20">「庭下如積水空明，水中藻荇交橫，蓋竹柏影也。」</p>
+                <p class="p-3 bg-amber-950/30 rounded border border-amber-500/20">「何夜無月？何處無竹柏？但少閒人如吾兩人許耳。」</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO & JAVASCRIPT LOGIC -->
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2.5 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = -Math.random() * 0.4 - 0.1;
+                this.alpha = Math.random() * 0.6 + 0.2;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.y < 0 || this.x < 0 || this.x > canvas.width) {
+                    this.reset();
+                    this.y = canvas.height;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = '#fde68a';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 50; i++) particles.push(new Particle());
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        let synth, polySynth;
+        let soundEnabled = true;
+
+        function initAudio() {
+            try {
+                synth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1 }
+                }).toDestination();
+                
+                polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+                polySynth.volume.value = -12;
+            } catch (e) {
+                console.log("Audio Context Error: ", e);
+            }
+        }
+
+        function playTone(note) {
+            if (!soundEnabled) return;
+            Tone.start();
+            if (synth) synth.triggerAttackRelease(note, "8n");
+        }
+
+        document.getElementById('audioToggleBtn').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('audioIcon');
+            if (soundEnabled) {
+                icon.className = 'fas fa-volume-up text-lg';
+            } else {
+                icon.className = 'fas fa-volume-mute text-lg text-red-400';
+            }
+        });
+
+        document.getElementById('poemBookBtn').addEventListener('click', togglePoemModal);
+
+        function togglePoemModal() {
+            const poemModal = document.getElementById('poemModal');
+            poemModal.classList.toggle('hidden');
+        }
+
+        let currentChapter = 0;
+        let stepIndex = 0;
+
+        const storyChapters = [
+            {
+                title: "序章：月色入戶",
+                dialog: "「解衣欲睡，月色入戶，欣然起行。」深夜月光溫柔地鋪滿客堂，此等良霄豈能獨自沉睡？",
+                btnText: "前往承天寺",
+                action: () => launchPuzzle(1)
+            },
+            {
+                title: "第一章：步入寺門",
+                dialog: "來到承天寺門前，夜深人靜，寺門微掩。門上的對聯機關需藉由月光排列詩句方能開啟。",
+                btnText: "解開門鎖機關",
+                action: () => launchPuzzle(2)
+            },
+            {
+                title: "第二章：尋訪懷民",
+                dialog: "「念無與為樂者，遂至承天寺尋張懷民。」庭院長廊靜悄，不知懷民睡下了沒？",
+                btnText: "叩響懷民房門",
+                action: () => launchPuzzle(3)
+            },
+            {
+                title: "終章：積水空明",
+                dialog: "「庭下如積水空明，水中藻荇交橫，蓋竹柏影也。何夜無月？何處無竹柏？但少閒人如吾兩人許耳。」",
+                btnText: "體悟閒人意境",
+                action: () => showGameEnding()
+            }
+        ];
+
+        function startGame() {
+            initAudio();
+            document.getElementById('startMenu').classList.add('hidden');
+            document.getElementById('gameplayArea').classList.remove('hidden');
+            loadChapter(0);
+        }
+
+        function loadChapter(index) {
+            currentChapter = index;
+            const data = storyChapters[index];
+            document.getElementById('chapterTitle').innerText = data.title;
+            document.getElementById('dialogText').innerText = data.dialog;
+            document.getElementById('btnText').innerText = data.btnText;
+        }
+
+        function handleNextStep() {
+            playTone("C5");
+            storyChapters[currentChapter].action();
+        }
+
+        function launchPuzzle(type) {
+            const modal = document.getElementById('puzzleModal');
+            const title = document.getElementById('puzzleTitle');
+            const desc = document.getElementById('puzzleDesc');
+            const content = document.getElementById('puzzleContent');
+            const feedback = document.getElementById('puzzleFeedback');
+            
+            feedback.innerText = '';
+            modal.classList.remove('hidden');
+
+            if (type === 1) {
+                // Puzzle 1: Lantern Rotation
+                title.innerText = "序章：燈影解謎";
+                desc.innerText = "按正確順序點擊燈籠，排解心中惆悵以尋求月色之美。";
+                
+                content.innerHTML = `
+                    <div class="flex justify-center items-center space-x-6 my-4">
+                        <button onclick="pressLantern(1)" class="w-16 h-16 rounded-full glass-panel border border-amber-400/50 flex flex-col items-center justify-center hover:scale-110 transition-all text-amber-300 font-calligraphy text-xl">
+                            <i class="fas fa-lightbulb text-amber-400 mb-1"></i>月
+                        </button>
+                        <button onclick="pressLantern(2)" class="w-16 h-16 rounded-full glass-panel border border-amber-400/50 flex flex-col items-center justify-center hover:scale-110 transition-all text-amber-300 font-calligraphy text-xl">
+                            <i class="fas fa-lightbulb text-amber-400 mb-1"></i>影
+                        </button>
+                        <button onclick="pressLantern(3)" class="w-16 h-16 rounded-full glass-panel border border-amber-400/50 flex flex-col items-center justify-center hover:scale-110 transition-all text-amber-300 font-calligraphy text-xl">
+                            <i class="fas fa-lightbulb text-amber-400 mb-1"></i>心
+                        </button>
+                    </div>
+                `;
+                lanternSequence = [];
+            } else if (type === 2) {
+                // Puzzle 2: Verse Rearrangement
+                title.innerText = "第一章：詩句解密";
+                desc.innerText = "組合正確的詩句以打開承天寺之門";
+
+                content.innerHTML = `
+                    <div class="space-y-3 w-full">
+                        <button onclick="checkPoemAnswer('A')" class="w-full py-3 glass-panel hover:bg-amber-800/40 border border-amber-500/30 rounded-lg text-amber-100 text-sm">
+                            懷民亦未寢，相與步於中庭
+                        </button>
+                        <button onclick="checkPoemAnswer('B')" class="w-full py-3 glass-panel hover:bg-amber-800/40 border border-amber-500/30 rounded-lg text-amber-100 text-sm">
+                            庭下如積水空明，水中藻荇交橫
+                        </button>
+                        <button onclick="checkPoemAnswer('C')" class="w-full py-3 glass-panel hover:bg-amber-800/40 border border-amber-500/30 rounded-lg text-amber-100 text-sm">
+                            何夜無月？何處無竹柏？
+                        </button>
+                    </div>
+                `;
+            } else if (type === 3) {
+                // Puzzle 3: Shadow Pattern Aligning
+                title.innerText = "第二章：藻荇竹影";
+                desc.innerText = "旋轉光影透鏡，還原「水中藻荇交橫」之景";
+
+                content.innerHTML = `
+                    <div class="relative w-40 h-40 flex items-center justify-center my-2">
+                        <div id="shadowDisc" class="w-36 h-36 border-2 border-dashed border-amber-400/60 rounded-full flex items-center justify-center transition-transform duration-500 cursor-pointer" onclick="rotateShadowDisc()">
+                            <i class="fas fa-leaf text-4xl text-amber-300 transform rotate-45"></i>
+                            <i class="fas fa-tree text-3xl text-amber-500/70 absolute"></i>
+                        </div>
+                    </div>
+                    <button onclick="verifyShadow()" class="mt-4 px-6 py-2 bg-amber-600 hover:bg-amber-500 text-amber-950 font-bold rounded-lg text-sm">
+                        對齊光影
+                    </button>
+                `;
+                shadowAngle = 0;
+            }
+        }
+
+        let lanternSequence = [];
+        function pressLantern(id) {
+            playTone(id === 1 ? "E5" : id === 2 ? "G5" : "A5");
+            lanternSequence.push(id);
+            const feedback = document.getElementById('puzzleFeedback');
+            feedback.innerText = `目前選擇：${lanternSequence.length}/3`;
+
+            if (lanternSequence.length === 3) {
+                if (lanternSequence.join('') === '123') {
+                    feedback.className = 'text-green-400 text-sm mt-4';
+                    feedback.innerText = '機關破解！月色滿庭。';
+                    setTimeout(() => {
+                        closePuzzleModal();
+                        loadChapter(1);
+                    }, 1200);
+                } else {
+                    feedback.className = 'text-red-400 text-sm mt-4';
+                    feedback.innerText = '順序不對，請重新嘗試。';
+                    lanternSequence = [];
+                }
+            }
+        }
+
+        function checkPoemAnswer(ans) {
+            playTone("G4");
+            const feedback = document.getElementById('puzzleFeedback');
+            if (ans === 'A') {
+                feedback.className = 'text-green-400 text-sm mt-4';
+                feedback.innerText = '對聯呼應！寺門緩緩敞開。';
+                setTimeout(() => {
+                    closePuzzleModal();
+                    loadChapter(2);
+                }, 1200);
+            } else {
+                feedback.className = 'text-amber-400 text-sm mt-4';
+                feedback.innerText = '此句雖美，但與當前門聯情境不符。';
+            }
+        }
+
+        let shadowAngle = 0;
+        function rotateShadowDisc() {
+            playTone("D5");
+            shadowAngle = (shadowAngle + 90) % 360;
+            const disc = document.getElementById('shadowDisc');
+            disc.style.transform = `rotate(${shadowAngle}deg)`;
+        }
+
+        function verifyShadow() {
+            const feedback = document.getElementById('puzzleFeedback');
+            if (shadowAngle === 180 || shadowAngle === 0) {
+                playTone("C6");
+                feedback.className = 'text-green-400 text-sm mt-4';
+                feedback.innerText = '竹柏與月光完美重合，宛如水中藻荇交橫！';
+                setTimeout(() => {
+                    closePuzzleModal();
+                    loadChapter(3);
+                }, 1200);
+            } else {
+                feedback.className = 'text-amber-400 text-sm mt-4';
+                feedback.innerText = '光影尚未對齊，再點擊圖騰旋轉角度。';
+            }
+        }
+
+        function closePuzzleModal() {
+            document.getElementById('puzzleModal').classList.add('hidden');
+        }
+
+        function showGameEnding() {
+            const modal = document.getElementById('puzzleModal');
+            const title = document.getElementById('puzzleTitle');
+            const desc = document.getElementById('puzzleDesc');
+            const content = document.getElementById('puzzleContent');
+            const feedback = document.getElementById('puzzleFeedback');
+
+            title.innerText = "夜遊終章：但少閒人";
+            desc.innerText = "元豐六年·黃州月夜完結";
+            
+            content.innerHTML = `
+                <div class="text-center p-4">
+                    <i class="fas fa-moon text-5xl gold-text mb-4 inline-block"></i>
+                    <p class="text-amber-100 text-base leading-relaxed mb-4">
+                        「何夜無月？何處無竹柏？但少閒人如吾兩人許耳。」
+                    </p>
+                    <p class="text-xs text-amber-300/70">
+                        你已領悟蘇軾與張懷民在貶謫歲月中，依然能擁抱天地清風與明月的曠達胸懷。
+                    </p>
+                </div>
+            `;
+            feedback.innerHTML = `
+                <button onclick="location.reload()" class="px-6 py-2 bg-gradient-to-r from-amber-600 to-yellow-500 text-amber-950 font-bold rounded-lg text-sm">
+                    再次體驗
+                </button>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function showInstructions() {
+            alert("《記承天寺夜遊》解謎指南：\n1. 隨故事劇情選擇對應的行動與互動選項。\n2. 遇到機關時，透過觀察詩意與光影進行解謎。\n3. 右上角「名句手記」可隨時查閱文中經典名句。");
+        }
+    </script>
+</body>
+</html>
